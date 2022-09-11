@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+
+<!-- run: http-server & -->
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Running Total of TMDb Movies by Year</title>
+    <script type="text/javascript" src="lib/d3/d3.min.js"></script>
+    <style type="text/css">
+      body{
+          background-color: rgba(69, 74, 71, 0.93);
+      }
+      axis line{
+          stroke: white;
+      }
+      .axis path{
+          stroke: white;
+      }
+      .axis text{
+          fill :white;
+      }
+
+    </style>
+</head>
+
+<body>
+
+  <script src="lib/d3/d3.min.js"></script>
+  <script src="lib/d3-dsv/d3-dsv.min.js"></script>
+  <script src="lib/d3-fetch/d3-fetch.min.js"></script>
+
+
+  <script type="text/javascript">
+    // define the dimensions and margins for the graph
+    var margin = {top: 30, right: 20, bottom: 30, left: 50};
+    var width=1300- margin.left - margin.right;
+    var height=1800 - margin.top - margin.bottom;
+    var pad=6;
+
+
+
+    // define function to parse time in years format
+	var Year = d3.timeParse("%Y");
+
+    // create scales x & y for X and Y axis and set their ranges
+    var xscale=d3.scaleTime();
+    var yscale=d3.scaleLinear();
+
+
+
+
+    // append svg element to the body of the page
+    // set dimensions and position of the svg element
+    var svg = d3.select("body").append("svg").attr('width',width).attr('height',height);
+
+    var defs=svg.append('defs');
+    var linearGradient = defs.append("linearGradient").attr("id", "linear-gradient");
+
+
+
+
+    // Get the data
+	var pathToCsv = "q3.csv";		// path to csv
+	
+    d3.dsv(",", pathToCsv, function (d) {
+      return {year:Year(d.year),running_total:+d.running_total};
+        // format data attributes if required
+
+    }).then(function (data) {
+      console.log(data); // you should see the data in your browser's developer tools console 
+      
+      /* Create bar plot using data from csv */
+
+      // set the domains of X and Y scales based on data
+      X_aix = d3.scaleTime().domain(
+          [d3.min(data,function(d) {return d.year;}),
+           d3.max(data,function (d) {return d.year;})
+          ]).range([pad,width-7*pad]);
+
+      Y1_aix = d3.scaleLinear().domain(
+          [d3.min(data,function (d) {return d.running_total;}),
+           d3.max(data,function (d) {return d.running_total;})
+          ]).range([height,0]);
+
+      Y2_aix = d3.scaleLinear().domain(
+          [d3.min(data,function (d) {return d.running_total;}),
+           d3.max(data,function (d) {return d.running_total;})
+          ]).range([0,height]);
+
+      // Add bars to svg - create new elements based on your data
+      /*create new element for svg */
+
+
+
+      linearGradient.append("stop").attr("offset", "100%").attr("stop-color", "#d8eb33");
+
+      svg.selectAll('rect')
+          .data(data)
+          .enter()
+          .append('rect')
+          .attr('x',function(d){return X_aix(d.year)+ 4.5*pad;})
+          .attr('y',function (d){return Y1_aix(d.running_total)-7*pad;})
+          .attr('width',(width/data.length)-pad)
+          .attr('height',function (d) {return Y2_aix(d.running_total);})
+          .attr('fill',"url(#linear-gradient)");
+
+
+
+      // Add the X Axis
+      xA = d3.axisBottom().scale(X_aix).ticks(d3.timeYear.every(10));
+
+      svg.append('g').attr('class','axis').attr("transform", "translate("+5*pad+","+(height-7*pad)+")")
+          .call(xA); //9 6.5
+
+      // Add the text label for X Axis
+      svg.append('text')
+          .attr('class','x label')
+          .attr('x',width/2)
+          .attr('y', height)
+          .style('text-anchor','middle')
+          .style("fill", "white")
+          .text('Year');
+
+      // Add the Y Axis
+      yA = d3.axisLeft().scale(Y1_aix).ticks(15);
+
+
+      svg.append('g').attr('class','axis').attr("transform", "translate("+8*pad+","+(-7*pad)+")")
+          .call(yA); //10,6
+
+
+      // Add the text label for Y axis
+      svg.append('text')
+          .attr("transform", "translate(0,20) rotate(-90)")
+          .attr('class','y label')
+          .attr('x',0-(height/2))
+          .attr('y',10)
+          .attr('dy','1em')
+          .attr('text-anchor','middle')
+          .style('font-size','15px')
+          .style("fill", "white")
+          .text('Running Total');
+
+
+      //add title
+      svg.append('text')
+          .attr('x',(width/2))
+          .attr('y',20)
+          .attr('text-anchor','middle')
+          .style('font-size','25px')
+          .style("font-weight", "bold")
+          .style("fill", "white")
+          .text('Running Total of TMDb Movies by Year');
+
+      // add GT
+      svg.append('text')
+          .attr('x',(width-30))
+          .attr('y',height)
+          .attr('text-anchor','middle')
+          .style('font-size','16px')
+          .style("fill", "white")
+          .text('bli418');
+
+
+
+
+    }).catch(function (error) {
+      console.log(error);
+    });
+
+
+  </script>
+
+</body>
+</html>
